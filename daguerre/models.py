@@ -1,5 +1,7 @@
 import operator
+from datetime import date
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -99,12 +101,20 @@ def delete_adjusted_images(sender, **kwargs):
     qs.delete()
 
 
+def upload_to(instance, filename):
+    first_dir = settings.DAGUERRE_PATH \
+        if hasattr(settings, 'DAGUERRE_PATH') else 'daguerre'
+    today = date.today()
+    return '{0}/{1}/{2:02}/{3:02}/{4}'.format(first_dir, today.year,
+                                                today.month, today.day,
+                                                filename)
+
 class AdjustedImage(models.Model):
     """Represents a managed image adjustment."""
     storage_path = models.CharField(max_length=200)
     # The image name is a 20-character hash, so the max length with a 4-char
-    # extension (jpeg) is 45.
-    adjusted = models.ImageField(upload_to='daguerre/%Y/%m/%d/',
+    # extension (jpeg) is 45. Maximum length for DAGUERRE_PATH string is 8.
+    adjusted = models.ImageField(upload_to=upload_to,
                                  max_length=45)
 
     requested = models.CharField(max_length=100)

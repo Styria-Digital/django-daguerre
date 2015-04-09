@@ -37,8 +37,10 @@ else:
     IOERRORS = IOERRORS + (boto.exception.BotoServerError,
                            boto.exception.S3ResponseError)
 
+GENERATE = settings.DAGUERRE_GENERATE if hasattr(settings, 'DAGUERRE_GENERATE') else False
 
-def adjust(path_or_iterable, adjustment=None, lookup=None, generate=False, **kwargs):
+def adjust(path_or_iterable, adjustment=None, lookup=None, generate=GENERATE, **kwargs):
+
     if isinstance(path_or_iterable, AdjustmentHelper):
         helper = path_or_iterable
     else:
