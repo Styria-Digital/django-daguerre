@@ -116,10 +116,8 @@ class Fit(Adjustment):
             new_height = int(height)
             new_width = int(new_height * image_ratio)
         else:
-            # Constrain strictly by both dimensions.
-            width, height = int(width), int(height)
-            new_width = int(min(width, height * image_ratio))
-            new_height = int(min(height, width / image_ratio))
+            # Designer wants 320x200 not 319x200 or 320x199
+            new_width, new_height = int(width), int(height)
 
         return new_width, new_height
     calculate.uses_areas = False
