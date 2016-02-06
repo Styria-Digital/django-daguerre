@@ -1,5 +1,6 @@
+import hashlib
 import operator
-from datetime import date
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -105,9 +106,22 @@ def upload_to(instance, filename):
     first_dir = settings.DAGUERRE_PATH \
         if hasattr(settings, 'DAGUERRE_PATH') else 'daguerre'
     today = date.today()
-    return '{0}/{1}/{2:02}/{3:02}/{4}'.format(first_dir, today.year,
+
+    # custom settings whether to build daguerre image dir using date or hash
+    # fallback to 'date'
+    path_slots = settings.DAGUERRE_PATH_SLOTS_TYPE \
+        if hasattr(settings, 'DAGUERRE_PATH_SLOTS_TYPE') else 'date'
+
+    if path_slots == 'hash':
+        hash_for_dir = hashlib.md5('{} {}'
+            .format(filename, datetime.utcnow())).hexdigest()
+        return '{0}/{1}/{2}/{3}'.format(
+            first_dir, hash_for_dir[0:1], hash_for_dir[1:3], filename)
+    else:
+        return '{0}/{1}/{2:02}/{3:02}/{4}'.format(first_dir, today.year,
                                                 today.month, today.day,
                                                 filename)
+
 
 class AdjustedImage(models.Model):
     """Represents a managed image adjustment."""
