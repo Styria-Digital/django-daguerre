@@ -1,5 +1,8 @@
+import hashlib
 import operator
+from datetime import date, datetime
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -99,17 +102,41 @@ def delete_adjusted_images(sender, **kwargs):
     qs.delete()
 
 
+def upload_to(instance, filename):
+    first_dir = settings.DAGUERRE_PATH \
+        if hasattr(settings, 'DAGUERRE_PATH') else 'daguerre'
+    today = date.today()
+
+    # custom settings whether to build daguerre image dir using date or hash
+    # fallback to 'date'
+    path_slots = settings.DAGUERRE_PATH_SLOTS_TYPE \
+        if hasattr(settings, 'DAGUERRE_PATH_SLOTS_TYPE') else 'date'
+
+    if path_slots == 'hash':
+        hash_for_dir = hashlib.md5('{} {}'
+            .format(filename, datetime.utcnow())).hexdigest()
+        return '{0}/{1}/{2}/{3}'.format(
+            first_dir, hash_for_dir[0:2], hash_for_dir[2:4], filename)
+    else:
+        return '{0}/{1}/{2:02}/{3:02}/{4}'.format(first_dir, today.year,
+                                                today.month, today.day,
+                                                filename)
+
+
 class AdjustedImage(models.Model):
     """Represents a managed image adjustment."""
     storage_path = models.CharField(max_length=200)
     # The image name is a 20-character hash, so the max length with a 4-char
-    # extension (jpeg) is 45.
-    adjusted = models.ImageField(upload_to='daguerre/%Y/%m/%d/',
+    # extension (jpeg) is 45. Maximum length for DAGUERRE_PATH string is 8.
+    adjusted = models.ImageField(upload_to=upload_to,
                                  max_length=45)
+
     requested = models.CharField(max_length=100)
 
     class Meta:
-        index_together = [['requested', 'storage_path'], ]
+        index_together = [
+            ['requested', 'storage_path'],
+        ]
 
     def __unicode__(self):
         return u"{0}: {1}".format(self.storage_path, self.requested)
