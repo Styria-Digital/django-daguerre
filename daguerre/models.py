@@ -103,6 +103,21 @@ def delete_adjusted_images(sender, **kwargs):
 
 
 def upload_to(instance, filename):
+
+    def find_suitable_path(hash_for_dir, i=0):
+        """Avoid 'ad' when creating a directory path."""
+        try:
+            first, second = hash_for_dir[i:i+2], hash_for_dir[i+2: i+4]
+            if 'ad' not in (first, second):
+                return first, second
+            else:
+                find_suitable_path(hash_for_dir, i+1)
+        except IndexError, e:
+            # A fallback in case the entire hash code was traversed and no
+            # suitable match was found. Not an ideal solution, but the
+            # probability of reaching this step is minimal.
+            return '00', '00'
+
     first_dir = settings.DAGUERRE_PATH \
         if hasattr(settings, 'DAGUERRE_PATH') else 'daguerre'
     today = date.today()
@@ -115,8 +130,9 @@ def upload_to(instance, filename):
     if path_slots == 'hash':
         hash_for_dir = hashlib.md5('{} {}'
             .format(filename, datetime.utcnow())).hexdigest()
+        second_dir, third_dir = find_suitable_path(hash_for_dir)
         return '{0}/{1}/{2}/{3}'.format(
-            first_dir, hash_for_dir[0:2], hash_for_dir[2:4], filename)
+            first_dir, second_dir, third_dir, filename)
     else:
         return '{0}/{1}/{2:02}/{3:02}/{4}'.format(first_dir, today.year,
                                                 today.month, today.day,
