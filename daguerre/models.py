@@ -112,7 +112,7 @@ def upload_to(instance, filename):
                 return first, second
             else:
                 find_suitable_path(hash_for_dir, i+1)
-        except IndexError, e:
+        except IndexError:
             # A fallback in case the entire hash code was traversed and no
             # suitable match was found. Not an ideal solution, but the
             # probability of reaching this step is minimal.
