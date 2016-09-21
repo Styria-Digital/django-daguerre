@@ -25,7 +25,7 @@ class FitTestCase(BaseTestCase):
         self.assertEqual(fit.calculate((100, 100)), (50, 50))
 
     def test_calculate__smallest(self):
-        fit = Fit(width=60, height=50)
+        fit = Fit(width=50, height=50)
         self.assertEqual(fit.calculate((100, 100)), (50, 50))
 
     def test_adjust__both(self):
@@ -54,7 +54,7 @@ class FitTestCase(BaseTestCase):
 
     def test_adjust__smallest(self):
         im = Image.open(self._data_path('100x100.png'))
-        fit = Fit(width=60, height=50)
+        fit = Fit(width=50, height=50)
         adjusted = fit.adjust(im)
         self.assertEqual(adjusted.size, (50, 50))
         expected = Image.open(self._data_path('50x50_fit.png'))
